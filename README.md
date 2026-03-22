@@ -60,3 +60,8 @@ By tracking event frequency per `user_id`, the system identifies "Power Users"â€
 The "Activity Analytics Service" successfully bridges the gap between raw data collection and visual storytelling. It provides a robust foundation for any data-driven application requiring real-time monitoring of user behavior.
 
 ---
+
+### 7. UI
+<img width="1868" height="861" alt="Screenshot 2026-03-22 224033" src="https://github.com/user-attachments/assets/9be4039b-8697-4353-a083-5d55cc25eb17" />
+
+<img width="1851" height="887" alt="image" src="https://github.com/user-attachments/assets/85b32a7f-5a7e-40c4-b2e2-0e35000b176b" />
