@@ -40,6 +40,7 @@ By tracking event frequency per `user_id`, the system identifies "Power Users"â€
 ---
 
 ### 4. Technical Assumptions
+* **Frontend data format:** I assumed that the frontend does provide data in right format using some script which can be easily added at end of frontend in jswhich will listen to every click of user and div where user clicked then it will create a json object and send it to backend.
 * **Statelessness:** I assumed the service must be stateless. By hosting the database on Supabase and the logic on Render, the API can scale horizontally without losing data.
 * **CORS Protocols:** I assumed the frontend and backend might live on different domains. I implemented **Cross-Origin Resource Sharing** to allow secure communication between the dashboard and the API.
 * **Generic Ingestion:** While the dashboard uses an E-commerce theme, the backend is built to be "Use-Case Agnostic," meaning it can track any event type (e.g., IoT data, social media likes) with zero code changes.
