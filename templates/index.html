@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 p-6 md:p-12">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">🚀 Analytics Service</h1>
+                <p class="text-gray-500 mt-1">Real-time user behavior insights from Cloud PostgreSQL</p>
+            </div>
+            <button onclick="fetchData()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md transition-all flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                </svg>
+                Refresh Data
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Total System Events</p>
+                <h2 id="total-events" class="text-3xl font-bold text-gray-800 italic">0</h2>
+                <p class="text-gray-400 text-xs mt-2">Raw rows in DB</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-xs font-bold text-green-600 uppercase tracking-wider mb-1">Unique Visitors</p>
+                <h2 id="unique-users" class="text-3xl font-bold text-gray-800">0</h2>
+                <p class="text-gray-400 text-xs mt-2">Distinct User IDs</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">Top Action</p>
+                <h2 id="top-action" class="text-2xl font-bold text-gray-800 truncate">—</h2>
+                <p class="text-gray-400 text-xs mt-2 text-wrap">Most frequent event</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-xs font-bold text-orange-600 uppercase tracking-wider mb-1">Conversion Rate</p>
+                <h2 id="conv-rate" class="text-3xl font-bold text-gray-800">0%</h2>
+                <p class="text-gray-400 text-xs mt-2">Search to Purchase</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-800">Peak Traffic Hours</h3>
+                    <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">Hourly aggregation</span>
+                </div>
+                <div class="h-64">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-800">E-commerce Funnel</h3>
+                    <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">Conversion Flow</span>
+                </div>
+                <div class="h-64">
+                    <canvas id="funnelChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-50">
+                <h3 class="font-bold text-gray-800">Event Frequency Breakdown</h3>
+            </div>
+            <div class="p-0">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold">Event Name</th>
+                            <th class="px-6 py-4 font-semibold text-right">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody id="event-table-body" class="divide-y divide-gray-100 text-gray-600">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let trafficChartInstance = null;
+        let funnelChartInstance = null;
+
+        async function fetchData() {
+            try {
+                // 1. Fetch from Summary
+                const sumRes = await fetch('http://localhost:5000/analytics/summary');
+                const summary = await sumRes.json();
+
+                // 2. Fetch from Detailed
+                const detRes = await fetch('http://localhost:5000/analytics/detailed');
+                const detailed = await detRes.json();
+
+                if (summary.status !== 'success' || detailed.status !== 'success') throw new Error("API Error");
+
+                const sumData = summary.data_summary;
+                const visData = detailed.visual_data;
+
+                // --- UPDATE UI CARDS ---
+                document.getElementById('total-events').innerText = sumData.total_activities;
+                document.getElementById('unique-users').innerText = sumData.unique_active_users;
+                document.getElementById('conv-rate').innerText = visData.overall_conversion_rate;
+
+                // Find top action
+                const actions = sumData.popular_actions;
+                const topAction = Object.keys(actions).reduce((a, b) => actions[a] > actions[b] ? a : b);
+                document.getElementById('top-action').innerText = topAction;
+
+                // --- UPDATE TABLE ---
+                const tbody = document.getElementById('event-table-body');
+                tbody.innerHTML = '';
+                Object.entries(actions).forEach(([name, count]) => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-blue-50 transition">
+                            <td class="px-6 py-4 font-medium text-gray-800">${name}</td>
+                            <td class="px-6 py-4 text-right font-mono">${count}</td>
+                        </tr>`;
+                });
+
+                // --- RENDER CHARTS ---
+                renderTrafficChart(visData.line_chart_hourly_traffic);
+                renderFunnelChart(visData.funnel_conversion);
+
+            } catch (err) {
+                console.error("Dashboard Sync Failed:", err);
+                alert("Make sure your Flask server is running at localhost:5000!");
+            }
+        }
+
+        function renderTrafficChart(hourlyData) {
+            const ctx = document.getElementById('trafficChart').getContext('2d');
+            if (trafficChartInstance) trafficChartInstance.destroy();
+            trafficChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(hourlyData),
+                    datasets: [{
+                        label: 'Interactions',
+                        data: Object.values(hourlyData),
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { maintainAspectRatio: false, responsive: true }
+            });
+        }
+
+        function renderFunnelChart(funnelData) {
+            const ctx = document.getElementById('funnelChart').getContext('2d');
+            if (funnelChartInstance) funnelChartInstance.destroy();
+            funnelChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Searches', 'Added to Cart', 'Purchases'],
+                    datasets: [{
+                        data: [funnelData.searches, funnelData.cart_adds, funnelData.purchases],
+                        backgroundColor: ['#6366f1', '#10b981', '#f43f5e'],
+                        borderRadius: 8
+                    }]
+                },
+                options: { 
+                    maintainAspectRatio: false, 
+                    responsive: true,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
