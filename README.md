@@ -40,6 +40,7 @@ By tracking event frequency per `user_id`, the system identifies "Power Users"â€
 ---
 
 ### 4. Technical Assumptions
+* **Frontend data format:** I assumed that the frontend does provide data in right format using some script which can be easily added at end of frontend in jswhich will listen to every click of user and div where user clicked then it will create a json object and send it to backend.
 * **Statelessness:** I assumed the service must be stateless. By hosting the database on Supabase and the logic on Render, the API can scale horizontally without losing data.
 * **CORS Protocols:** I assumed the frontend and backend might live on different domains. I implemented **Cross-Origin Resource Sharing** to allow secure communication between the dashboard and the API.
 * **Generic Ingestion:** While the dashboard uses an E-commerce theme, the backend is built to be "Use-Case Agnostic," meaning it can track any event type (e.g., IoT data, social media likes) with zero code changes.
@@ -60,3 +61,8 @@ By tracking event frequency per `user_id`, the system identifies "Power Users"â€
 The "Activity Analytics Service" successfully bridges the gap between raw data collection and visual storytelling. It provides a robust foundation for any data-driven application requiring real-time monitoring of user behavior.
 
 ---
+
+### 7. UI
+<img width="1868" height="861" alt="Screenshot 2026-03-22 224033" src="https://github.com/user-attachments/assets/9be4039b-8697-4353-a083-5d55cc25eb17" />
+
+<img width="1851" height="887" alt="image" src="https://github.com/user-attachments/assets/85b32a7f-5a7e-40c4-b2e2-0e35000b176b" />
